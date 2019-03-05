@@ -1,0 +1,43 @@
+Assignment 2, Problem 1: What's your game?
+Team LookingForOneMorePerson: Quan, Julian, Vladimir
+
+TITLE:
+
+BACKSTORY AND GOAL:
+Chef Chef runs a Michelin 3-star restaurant named Chez Chef. He's spent the last
+week preparing an extravagant meal for a very important person. One morning, he
+comes in to work only to find that his entire kitchen has been ransacked by a
+colony of giant, super strong rats. Chef decides to take matters into his own
+hands, and rid his restaurant of all of these rats forever. Playing as Chef, the
+goal of the game is to kill all the rats in each level and reach the exit
+without losing all of your HP.
+
+LEVELS:
+Each level explores a different part of Chez Chef where the rats have
+infiltrated. The player begins in the kitchen (Level 1), moves on to the pantry/
+warehouse (Level 2), and then reaches the rats' home base in the sewage tunnels
+underneath the restaurant (Level 3). Eventually, the tunnels lead to the final
+boss labyrinth (Level 4). The final boss is a giant, evil, sentient meatball
+named Meatboss. His rat army collects food from around the restaurant for him,
+so that he can grow stronger. In order to kill the final boss, the player must
+carefully strategize to maneuver Meatboss into a giant meat grinder.
+
+ATTACKS:
+Chef can attack in close combat with various kitchen tools that can be found
+during gameplay. He is default equipped with a spatula, but can acquire better
+tools along the way like a cheese grater, a cast-iron skillet, etc.
+
+SPECIAL ABILITIES:
+Chef was born with a medical condition called Vegemight, which gives him the
+ability to super-absorb nutrients out of fruits and vegetables, granting him
+special powers. As the player explores each level, Chef can pick up the
+following special food items to enable certain effects for a set period of time:
+
+  - sweet potatoes --> increase speed
+  - broccoli --> increase defense (rats won't do as much damage)
+  - spinach --> increase strength (Chef's attacks will deal more damage)
+  - oranges --> recover health (fill up Chef's HP a certain amount)
+  - carrots --> increased vision for level 3 or 4 when needed
+
+MOVEMENT:
+The player can move using the arrow keys, and attack using specified keys.

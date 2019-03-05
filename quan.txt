@@ -1,0 +1,13 @@
+Things Quan added:
+- Level 2 map tiles, key, and data
+   - The pushable box (19, 20, 21, or 22) belongs on the tile coded "1", 
+     which is the exit.
+- Level 2 pantry opening animation
+- New pop-up messages
+   - This includes all necessary carrot-related messages, if ready to implement.- Item graphics that can show up in your inventory next to the key
+   - Shows ladles or cheese graters, depending on which item is equipped
+- Cheese grater attack sprite
+   - Have this be the attack sprite after the player finds the graters
+- New chef idle animation with stroke around it for the menu screen for better
+visibility.
+

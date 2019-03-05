@@ -1,0 +1,29 @@
+#updating chefs position and scrolling
+		if xPos > int(self.width / 2.0) + 1:
+			xDiff =  xPos - int(self.width / 2.0) 
+			if self.xShift is not len(self.map[0])*50 - 16*50:
+				self.xShift += xDiff
+				# updating enemies
+				for enemy in self.enemies:
+					enemy.xPos -= xDiff
+				# here is where you would update the object positions!!!
+				for object in self.objects:
+					object.xPos -= xDiff
+			else:
+			  	self.chef.xPos = xPos
+
+		elif xPos < int(self.width / 2.0) - 1:
+			xDiff =  int(self.width / 2.0) - xPos 
+			if self.xShift == 0:
+		 	 self.chef.xPos = xPos
+			else:
+				self.xShift -= xDiff
+
+				# updating enemies
+				for enemy in self.enemies:
+					enemy.xPos += xDiff
+				#here is where you would update the object positions
+				for object in self.objects:
+					object.xPos += xDiff
+		else:
+	   		self.chef.xPos = xPos

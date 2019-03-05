@@ -1,0 +1,470 @@
+import sys
+sys.path.insert(0, '/../entities/')
+sys.path.insert(0, '/../')
+import driver
+import sdl
+from basicState import BasicState
+import MCClass as MC
+import object
+import random
+import game
+import rats
+from object import Object
+from camera import Camera
+from structure import Structure
+from story import Story
+
+class LevelZero(BasicState):
+  def __init__(self):
+    self.next = None
+
+  # relies on the Seperating Axis Theorem to test for intersection 
+  def intersects(self, first, other):
+    selfTopRight = [first.xPos + first.width, first.yPos]
+    selfBottomLeft = [first.xPos, first.yPos + first.height]
+    otherTopRight = [other.xPos + other.width, other.yPos] 
+    otherBottomLeft = [other.xPos, other.yPos + other.height]
+    # True if there's a collision.
+    return not (selfTopRight[0] < otherBottomLeft[0] or
+				 selfBottomLeft[0] > otherTopRight[0] or
+				 selfTopRight[1] > otherBottomLeft[1] or
+				 selfBottomLeft[1] < otherTopRight[1])
+
+  def load(self):
+    time = sdl.getTicks()
+    #driver.loading.load()
+    global music
+    global bumpSound
+    global boingSound
+    global story1, story2
+    story1 = Story(1)
+    story2 = Story(2)
+    story1.load()
+    story2.load()
+    story1.run()
+    #driver.loading.run()
+    music = sdl.mixer.loadMUS("music/level1music.xm")
+    bumpSound = sdl.mixer.loadMUS("music/bump_effect.wav")
+    boingSound = sdl.mixer.loadMUS("music/boing.wav")
+
+    chefImages =     [sdl.image.load("graphics/sprites/chef_idle_new.png"),
+					sdl.image.load("graphics/sprites/chef_up_new.png"),
+					sdl.image.load("graphics/sprites/chef_right_new.png"),
+					sdl.image.load("graphics/sprites/chef_down_new.png"),
+					sdl.image.load("graphics/sprites/chef_left_new.png"),
+					sdl.image.load("graphics/sprites/chef_hurt_new.png"),
+					sdl.image.load("graphics/sprites/chef_attack_new.png"),
+					sdl.image.load("graphics/items/heart.png"),
+          sdl.image.load("graphics/items/key.png")]
+
+    for x in range(9):
+      chefImages.append(sdl.image.load("graphics/ui/pizza_" + str(x) + ".png"))
+
+ 
+    ratImages =       [sdl.image.load("graphics/sprites/rat_hurt.png"),
+					sdl.image.load("graphics/sprites/rat_up.png"),
+					sdl.image.load("graphics/sprites/rat_right.png"),
+					sdl.image.load("graphics/sprites/rat_down.png"),
+					sdl.image.load("graphics/sprites/rat_left.png"),
+					sdl.image.load("graphics/sprites/rat_attack_up.png"),
+					sdl.image.load("graphics/sprites/rat_attack_right.png"),
+					sdl.image.load("graphics/sprites/rat_attack_down.png"),
+					sdl.image.load("graphics/sprites/rat_attack_left.png"),
+					sdl.image.load("graphics/items/cheese.png")]
+
+    # array of tiles used throughout the map
+    mapImages = []
+    for x in range(1, 32):
+      mapImages.append(sdl.image.load("graphics/map/" + str( x) + ".png")) 
+
+    objectImages = [] 
+    objectImages.append(sdl.image.load("graphics/items/pizza_animation.png"))
+    objectImages.append(sdl.image.load("graphics/items/heart_animation.png"))
+    objectImages.append(sdl.image.load("graphics/items/carrot_animation.png"))
+    objectImages.append(sdl.image.load("graphics/items/key_animation.png"))
+
+    pantryImages = [sdl.image.load("graphics/items/open_pantry.png"),
+          sdl.image.load("graphics/items/pantry_open.png"),
+          sdl.image.load("graphics/messages/press_open.png"),
+          sdl.image.load("graphics/items/open_pantry_key.png"),
+          sdl.image.load("graphics/messages/found_key.png"),
+          sdl.image.load("graphics/messages/basement_locked.png")]
+
+    pantryTextures = []
+    for x in range(len(pantryImages)):
+      pantryTextures.append(driver.renderer.createTextureFromSurface(pantryImages[x]))
+      sdl.freeSurface(pantryImages[x])
+
+    # creates an array of arrays of integrets that represents our map's floor
+    global map
+    map = []
+    with open('data/map.txt') as f:
+      for line in f: 
+        currentLine = []
+        split = line.split()
+        for value in line.split():
+          currentLine.append(int(value))
+        map.append(currentLine)
+
+    # fill up the objects array which contains the objects that can be collided with 
+    global structures
+    structures = [] 
+    count = 0
+    for j in range(len(map)):
+      for i in range(len(map[j])):
+       value = map[j][i]
+       if value is 27:
+        if count is 0: 
+          struct = Structure(value, i, j, pantryTextures, True, "pantry")
+          count +=1
+        else:
+          struct = Structure(value, i, j, pantryTextures, False, "pantry")
+        structures.append(struct) 
+       elif value is (2 or 3):
+        structures.append(Structure(value, i, j, pantryTextures, False, "stairs"))
+       elif value is not 1:
+        structures.append(Structure(value, i, j, None, False, None)) 
+
+    # for now just stuff that's dropped by the rats
+    global objects
+    objects = []
+
+    global objectTextures
+    objectTextures = []
+    for x in range(len(objectImages)):
+      objectTextures.append(driver.renderer.createTextureFromSurface(objectImages[x]))
+      sdl.freeSurface(objectImages[x])
+    
+    global chefTextures
+    chefTextures = []
+    for x in range(len(chefImages)):
+      chefTextures.append(driver.renderer.createTextureFromSurface(chefImages[x]))
+      sdl.freeSurface(chefImages[x])
+
+    global ratTextures			
+    ratTextures  = []
+    for x in range(len(ratImages)):
+      ratTextures.append(driver.renderer.createTextureFromSurface(ratImages[x]))
+      sdl.freeSurface(ratImages[x])
+     
+    global mapTextures 
+    mapTextures  = []
+    for x in range(len(mapImages)):
+      mapTextures.append(driver.renderer.createTextureFromSurface(mapImages[x]))
+      sdl.freeSurface(mapImages[x])
+
+    global font
+    font = sdl.ttf.openFont("Pacifico.ttf", 72)
+
+    driver.scoreBoard.clearScore()
+    driver.scoreBoard.updateScore(100000)      
+    
+    while sdl.getTicks() - time < 2000:
+      pass
+    #driver.loading.cleanup()
+
+
+  def cleanup(self):
+      story1.cleanup()
+      story2.cleanup()
+      if font is not None:
+        sdl.ttf.closeFont(font)
+      if music is not None:
+        sdl.mixer.freeMusic(music)
+      if bumpSound is not None:
+        sdl.mixer.freeMusic(bumpSound)
+      if boingSound is not None:
+        sdl.mixer.freeMusic(boingSound)
+    
+      for x in range(len(chefTextures)):
+        if chefTextures[x] is not None:
+          sdl.destroyTexture(chefTextures[x])
+
+      for x in range(len(ratTextures)):
+        if ratTextures[x] is not None:
+          sdl.destroyTexture(ratTextures[x])
+
+      for x in range(len(mapTextures)):
+        if mapTextures[x] is not None:
+          sdl.destroyTexture(mapTextures[x])
+
+      for x in range(len(objectTextures)):
+        if objectTextures[x] is not None:
+          sdl.destroyTexture(objectTextures[x])
+
+  def createRandomRat(self, directions):
+      enemySpeed = 0.05
+
+      #xPosition = 500 #random.randint(600, 601)
+      #yPosition = 450 #random.randint(450, 451)
+      xPosition = random.randint(0, len(map[0]) - 1)     
+      yPosition = random.randint(0, len(map) - 1)
+
+
+      direction = directions[random.randint(0,7)]
+      rat = rats.Enemy(xPosition * 50, yPosition * 50, 50, 60, direction,
+	       enemySpeed, 4, 1)
+
+      while rat.checkCollisions(rat.getImmediateSurroundings(map)):
+        yPosition = random.randint(0, len(map))
+        xPosition = random.randint(0, len(map[0]))
+        rat.updateX(xPosition * 50)
+        rat.updateY(yPosition * 50)
+
+      return rat
+
+  def run(self):
+      sdl.mixer.playMusic(music, -1)
+      running = True
+      accumulator = 0.0
+      # clockwise starting at 12 o'clock
+      directions = ['n', 'ne', 'e', 'se', 's', 'sw', 'w', 'nw']
+
+      # currently the chef moves twice as fast as the enemies
+      chefSpeed = 0.2
+
+      # Boolean key directions
+      up = False
+      down = False
+      left = False
+      right = False
+     
+      # space = attack
+      space = False 
+ 
+      # r = release the rats
+      r = False
+
+      #use = use interactible structure
+      use = False
+ 
+      #list of enemies
+      enemies = []
+
+      event = sdl.Event()
+
+      # add the carrot 
+      objects.append(Object(1500, 600, 50, 50, 'carrot', objectTextures[2])) 
+      
+       # create the chef
+      chef = MC.Chef(350, 220, 50, 80, 'none', chefSpeed, 0, 0, 0.001, 0.001,
+            chefTextures, False, 10000, 0, 'none', 3, False, 1)
+
+       # create 5 randomly placed enemies moving in a random direction at enemySpeed
+      for i in range(0):
+        enemies.append(self.createRandomRat(directions))
+
+      time = 0
+      lastTime = sdl.getTicks()
+      camera = Camera(chef, map, mapTextures, objects, enemies, game.width, game.height, ratTextures, structures, 1)
+
+      currentTime = sdl.getTicks()
+      camera.display(currentTime, objects)
+      sdl.renderPresent(driver.renderer)
+      frames = 0
+      while running:
+          currentTime = sdl.getTicks()
+          framerate = 3000 / 60.0
+          dt = (currentTime - lastTime)
+          time += dt
+          lastTime = currentTime
+          accumulator += dt
+          # the time at which the player can be hit by enemies
+
+          while accumulator >= framerate:
+              if chef.getHealth() <= 0:
+                running = False
+                self.next = "gameOver"
+              elif (chef.yPos <= 50  and chef.xPos >= len(map[0]) * 50 - 150 and 
+                  chef.xPos <= len(map[0]) * 50 - 100 and 
+                  chef.hasKey is True and len(enemies) is 0):
+                running = False
+                self.next = "levelTwo"
+                story2.run()
+                return
+              while sdl.pollEvent(event):
+                 if event.type == sdl.QUIT:
+                      running = False
+                      game.turnOff()
+                 elif event.type == sdl.KEYUP:
+                      if event.key.keysym.sym in [sdl.K_q, sdl.K_ESCAPE]:
+                        running = False
+                        game.turnOff()
+                      if event.key.keysym.sym == sdl.K_UP:  up = False
+                      elif event.key.keysym.sym == sdl.K_DOWN:  down = False
+                      elif event.key.keysym.sym == sdl.K_LEFT:  left = False
+                      elif event.key.keysym.sym == sdl.K_RIGHT:  right = False
+                      elif event.key.keysym.sym == sdl.K_SPACE: space  = False
+                      elif event.key.keysym.sym == sdl.K_RETURN: use = False
+                 if event.type == sdl.KEYDOWN:
+                    if event.key.keysym.sym == sdl.K_UP: up = True
+                    elif event.key.keysym.sym == sdl.K_DOWN: down = True
+                    elif event.key.keysym.sym == sdl.K_LEFT: left = True
+                    elif event.key.keysym.sym == sdl.K_RIGHT: right = True
+                    elif event.key.keysym.sym == sdl.K_SPACE: space = True
+                    elif event.key.keysym.sym == sdl.K_r: r = True
+                    elif event.key.keysym.sym == sdl.K_RETURN: use = True
+                    #debug option to add 100 health
+                    elif event.key.keysym.sym == sdl.K_h:
+                        chef.setCanBeHit(False)
+                        chef.setDizzy(True)
+                        chef.setCanBeHitTime(time + 3000)
+                        chef.setDizzyTime(time + 750)
+                        #sdl.mixer.playMusic(bumpSound, 1)
+                        chef.updateHealth(8)
+                    elif event.key.keysym.sym == sdl.K_l:
+                        enemies.append(self.createRandomRat(directions))
+                    elif event.key.keysym.sym == sdl.K_m:
+                        running = False
+                        self.next = "menu"
+
+              # based on the keys pressed down set the chef's direction
+              chef.updateDirection(up, down, left, right)
+
+              # pressing space on keydown will place the player into attacking state
+              if space and time > chef.getAttackingTime():
+                  if chef.getEnergy() > 0:
+                      chef.setAttacking(True)
+                      chef.setAttackingTime(time + 1000) #attacking animation with be 1s
+                      chef.updateEnergy(-1)
+                  #If you try to attack when you're out of energy, become dizzy for .5s
+                  else:
+                      chef.setDizzy(True)
+                      chef.setDizzyTime(time + 500)
+
+              # if the player presses "space" the chef will go into attacking mode
+              # which overrides other animations except getting hit 
+              if time > chef.getAttackingTime() or chef.getDizzy(): 
+                  chef.setAttacking(False)
+              else:
+                  chef.setAttacking(True)
+                  chef.setEnergyRegenTime(time + 3000)
+
+              #if the player is not attacking, and less than 8 pizza slices, and not dizzy, and 3s from last time attacked, give energy
+              if not space and chef.getEnergy() < 8 and not chef.getDizzy() and time > chef.getEnergyRegenTime():
+                  chef.updateEnergy(1)
+                  chef.setEnergyRegenTime(time + 3000)
+
+              #if chef not attacking or dizzy, and on same tile as object, pick it up
+              if time > chef.getAttackingTime() and not chef.getDizzy():
+                  for obj in objects:
+                    if self.intersects(chef, obj):
+                      if obj.getTitle() == 'pizza' and chef.getEnergy() < 8:
+                        chef.updateEnergy(1)
+                        objects.remove(obj)
+                      if obj.getTitle() == 'heart':
+                        chef.updateHealth(1)
+                        objects.remove(obj)
+                      if obj.getTitle() == 'carrot': 
+                        chef.addItem('carrot')    
+                        objects.remove(obj)                      
+
+              # make sure the rats aren't invulnable after a set time
+              for enemy in enemies:
+                if time > enemy.getHurtTime(): 
+                    enemy.setHurt(False)
+                    enemy.resetDamageChange()
+
+              for pantry in structures:
+                if pantry.identity is "pantry" and pantry.triggered is False:
+                  pantry.xPos *=50
+                  pantry.yPos *= 50
+                  pantry.yPos -= 20
+                  if self.intersects(chef, pantry):
+                    if pantry.visible is False:
+                      pantry.changeVisibility()
+                  else:
+                    if pantry.visible:
+                      pantry.changeVisibility()
+                  pantry.xPos /=50
+                  pantry.yPos += 20
+                  pantry.yPos /= 50
+                  if pantry.visible:
+                    if use is True:
+                      pantry.triggerAction()
+                      if pantry.hasKey is True:
+                        chef.hasKey = True
+                elif pantry.identity is "stairs":
+                  if chef.hasKey is not True:
+                    pantry.xPos *= 50
+                    pantry.xPos -= 50
+                    pantry.yPos *= 50
+                    if self.intersects(chef, pantry):
+                      if pantry.visible is False:
+                        pantry.changeVisibility()
+                    else:
+                      if pantry.visible is True:
+                        pantry.changeVisibility()
+                    pantry.xPos += 50
+                    pantry.xPos /=50
+                    pantry.yPos /=50
+
+              # make sure the rats aren't attacking after a set time
+              for enemy in enemies:
+                if time > enemy.getAttackingTime(): 
+                    enemy.setAttacking(0)
+
+              # if the invulnability expired set hit back to true
+              if time > chef.getCanBeHitTime():
+                chef.setCanBeHit(True)
+
+              # if the dizzyness expired, set dizzy back to false
+              if time > chef.getDizzyTime():
+                chef.setDizzy(False)
+                chef.resetDamageChange()
+
+              #checking whether rats are hitting the chef
+              for enemy in enemies:
+                if self.intersects(chef, enemy): 
+                  # if sdl.hasIntersection(enemy.getRect(), chef.getRect()):
+                  # if intersection different things happend depending on if your attacking
+                  if chef.getAttacking():
+                     if not enemy.getHurt(): # if the rat can take damage
+                       enemy.updateHealth(-1)
+                       enemy.goOppositeDirection()
+                       enemy.setHurt(True) 
+                       enemy.setHurtTime(time + 1000) 
+                  else:
+                    if chef.getCanBeHit():
+                      if not enemy.getHurt(): # hurt rats can't damage us
+                        chef.setCanBeHit(False)
+                        chef.setDizzy(True)
+                        chef.setCanBeHitTime(time + 3000)
+                        chef.setDizzyTime(time + 750)
+                        enemy.getAttackingDirection(chef) # finds out what direction the rats should attack from
+                        enemy.setAttackingTime(time + 500)          
+                        # sdl.mixer.playMusic(bumpSound, 1)
+                        chef.updateHealth(-1)
+ 
+              # if rat gets hit five times by bumping, it dies
+              for enemy in enemies:
+                if enemy.health <= 0:
+                  int = random.randint(1,2)
+                  if int is 1:  
+                    objects.append(Object(enemy.xPos, enemy.yPos, 50, 50, 'pizza', objectTextures[0])) 
+                  elif int is 2:
+                    objects.append(Object(enemy.xPos, enemy.yPos, 50, 50, 'heart', objectTextures[1])) 
+                  enemies.remove(enemy)
+                  driver.scoreBoard.updateScore(1000)            
+
+              # score goes down at a set rate, encourages speed
+              driver.scoreBoard.updateScore(-1 * dt)      
+
+              # update chef position based on what keys are being pressed
+              # down if keys are pressed down and he is not off the screen
+              # also based on if chef collides into stuff
+              chef.updatePosition(accumulator, map)
+
+              # boing sound if the chef hits the wall
+              #if self.checkCollisions(chef, objects):
+              #  sdl.mixer.playMusic(boingSound, 1)
+
+              # update enemy positions based on direction
+              # if currentTime >= 10000:
+              #if r is True: 
+              for enemy in enemies:
+                enemy.updatePosition( accumulator, map, chef)
+              accumulator -= framerate
+
+          camera.display(currentTime, objects)
+          sdl.renderPresent(driver.renderer)
